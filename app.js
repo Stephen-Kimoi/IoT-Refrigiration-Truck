@@ -548,3 +548,18 @@ var connectCallback = (err) => {
         });
     }
 };
+
+
+// Start the device  
+provisioningClient.register((err, result) => {
+    if (err) {
+        redMessage('Error registering device: ' + err);
+    } else {
+        greenMessage('Registration succeeded');
+        console.log('Assigned hub=' + result.assignedHub);
+        console.log('DeviceId=' + result.deviceId);
+        var connectionString = 'HostName=' + result.assignedHub + ';DeviceId=' + result.deviceId + ';SharedAccessKey=' + symmetricKey;
+        hubClient = Client.fromConnectionString(connectionString, iotHubTransport);
+        hubClient.open(connectCallback);
+    }
+});
