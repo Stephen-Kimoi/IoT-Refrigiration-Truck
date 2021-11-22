@@ -515,3 +515,36 @@ function handleWriteablePropertyUpdates(twin) {
         }
     });
 }
+
+
+// Handle device connection to Azure IoT Central. 
+var connectCallback = (err) => {
+    if (err) {
+        redMessage(`Device could not connect to Azure IoT Central: ${err.toString()}`);
+    } else {
+        greenMessage('Device successfully connected to Azure IoT Central');
+
+        // Send telemetry to Azure IoT Central every 5 seconds. 
+        setInterval(sendTruckTelemetry, 5000);
+
+        // Get device twin from Azure IoT Central. 
+        hubClient.getTwin((err, twin) => {
+            if (err) {
+                redMessage(`Error getting device twin: ${err.toString()}`);
+            } else {
+
+                // Send device properties once on device start up. 
+                var properties =
+                {
+                    // Format: 
+                    // <Property Name in Azure IoT Central> ":" <value in Node.js app> 
+                    TruckID: truckIdentification,
+                };
+                sendDeviceProperties(twin, properties);
+                handleWriteablePropertyUpdates(twin);
+                hubClient.onDeviceMethod('GoToCustomer', CmdGoToCustomer);
+                hubClient.onDeviceMethod('Recall', CmdRecall);
+            }
+        });
+    }
+};
