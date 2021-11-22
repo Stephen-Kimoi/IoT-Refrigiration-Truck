@@ -251,3 +251,41 @@ function CmdGoToCustomer(request, response) {
         }
     });
 }
+
+
+// RECALL COMMAND: 
+function ReturnToBase() {
+    destinationLat = baseLat;
+    destinationLon = baseLon;
+
+    // Find route from current position to base, and store route. 
+    GetRoute(stateEnum.returning);
+}
+
+function CmdRecall(request, response) {
+    switch (state) {
+        case stateEnum.ready:
+        case stateEnum.loading:
+        case stateEnum.dumping:
+            eventText = "Already at base";
+            break;
+        case stateEnum.returning:
+            eventText = "Already returning";
+            break;
+        case stateEnum.delivering:
+            eventText = "Unable to recall - " + state;
+            break;
+        case stateEnum.enroute:
+            ReturnToBase();
+            break;
+    }
+
+    // Acknowledge the command. 
+    response.send(200, 'Success', function (errorMessage) {
+
+        // Failure 
+        if (errorMessage) {
+            redMessage('Failed sending a CmdRecall response:\n' + errorMessage.message);
+        }
+    });
+}
