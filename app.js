@@ -289,3 +289,140 @@ function CmdRecall(request, response) {
         }
     });
 }
+
+
+// TRACKING THE TRUCK SIMULATION AT EACH INTERVAL: 
+function dieRoll(max) {
+    return Math.random() * max;
+}
+
+function UpdateTruck() {
+    if (contents == contentsEnum.empty) {
+
+        // Turn the cooling system off, if possible, when the contents are empty. 
+        if (fan == fanEnum.on) {
+            fan = fanEnum.off;
+        }
+        temp += -2.9 + dieRoll(6);
+    }
+    else {
+
+        // Contents are full or melting. 
+        if (fan != fanEnum.failed) {
+            if (temp < optimalTemperature - 5) {
+
+                // Turn the cooling system off because contents are getting too cold. 
+                fan = fanEnum.off;
+            }
+            else {
+                if (temp > optimalTemperature) {
+
+                    // Temperature is getting higher, so turn cooling system back on. 
+                    fan = fanEnum.on;
+                }
+            }
+
+            // Randomly fail the cooling system. 
+            if (dieRoll(100) < 1) {
+                fan = fanEnum.failed;
+            }
+        }
+
+        // Set the contents temperature. Maintain a cooler temperature if the cooling system is on. 
+        if (fan === fanEnum.on) {
+            temp += -3 + dieRoll(5);
+        }
+        else {
+            temp += -2.9 + dieRoll(6);
+        }            
+
+        // If the temperature is above a threshold, count the seconds of the duration, and melt the contents if it goes on too long. 
+        if (temp >= tooWarmThreshold) {
+
+            // Contents are warming. 
+            tooWarmPeriod += interval;
+            if (tooWarmPeriod >= tooWarmtooLong) {
+
+                // Contents are melting. 
+                contents = contentsEnum.melting;
+            }
+        }
+        else {
+            // Contents are cooling. 
+            tooWarmPeriod = Math.max(0, tooWarmPeriod - interval);
+        }
+    }
+
+    // Limit max temp to outside temperature.
+    temp = Math.min(temp, outsideTemperature);
+
+
+    timeOnCurrentTask += interval;
+    switch (state) {
+        case stateEnum.loading:
+            if (timeOnCurrentTask >= loadingTime) {
+
+                // Finished loading. 
+                state = stateEnum.ready;
+                contents = contentsEnum.full;
+                timeOnCurrentTask = 0;
+
+                // Repair or turn on the cooling fan. 
+                fan = fanEnum.on;
+                temp = -2;
+            }
+            break;
+        case stateEnum.ready:
+            timeOnCurrentTask = 0;
+            break;
+        case stateEnum.delivering:
+            if (timeOnCurrentTask >= deliverTime) {
+
+                // Finished delivering. 
+                contents = contentsEnum.empty;
+                ReturnToBase();
+            }
+            break;
+        case stateEnum.returning:
+
+            // Update the truck position. 
+            UpdatePosition();
+
+            // Check to see if the truck has arrived back at base. 
+            if (Arrived()) {
+                switch (contents) {
+                    case contentsEnum.empty:
+                        state = stateEnum.loading;
+                        break;
+                    case contentsEnum.full:
+                        state = stateEnum.ready;
+                        break;
+                    case contentsEnum.melting:
+                        state = stateEnum.dumping;
+                        break;
+                }
+                timeOnCurrentTask = 0;
+            }
+            break;
+        case stateEnum.enroute:
+
+            // Update truck position. 
+            UpdatePosition();
+
+            // Check to see if the truck has arrived at the customer. 
+            if (Arrived()) {
+                state = stateEnum.delivering;
+                timeOnCurrentTask = 0;
+            }
+            break;
+        case stateEnum.dumping:
+            if (timeOnCurrentTask >= dumpingTime) {
+
+                // Finished dumping. 
+                state = stateEnum.loading;
+                contents = contentsEnum.empty;
+                timeOnCurrentTask = 0;
+            }
+            break;
+    }
+}
