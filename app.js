@@ -426,3 +426,51 @@ function UpdateTruck() {
             break;
     }
 }
+
+// FUNCTION FOR SENDING TRUCK TELEMETRY AND ANY EVENTS THAT HAVE MIGHT OCCURED:
+function sendTruckTelemetry() {
+
+    // Simulate the truck. 
+    UpdateTruck();
+
+    // Create the telemetry data JSON package. 
+    var data = JSON.stringify(
+        {
+            // Format: 
+            // Name from IoT Central app ":" variable name from NodeJS app. 
+            ContentsTemperature: temp.toFixed(2),
+            TruckState: state,
+            CoolingSystemState: fan,
+            ContentsState: contents,
+            Location: {
+
+                // Names must be lon, lat. 
+                lon: currentLon,
+                lat: currentLat
+            },
+        });
+
+    // Add the eventText event string, if there is one. 
+    if (eventText != noEvent) {
+        data += JSON.stringify(
+            {
+                Event: eventText,
+            }
+        );
+        eventText = noEvent;
+    }
+
+    // Create the message by using the preceding defined data. 
+    var message = new Message(data);
+    console.log("Message: " + data);
+
+    // Send the message. 
+    hubClient.sendEvent(message, function (errorMessage) {
+        // Error 
+        if (errorMessage) {
+            redMessage("Failed to send message to Azure IoT Central: ${err.toString()}");
+        } else {
+            greenMessage("Telemetry sent");
+        }
+    });
+}
