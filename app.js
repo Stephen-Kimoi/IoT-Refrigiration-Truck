@@ -474,3 +474,44 @@ function sendTruckTelemetry() {
         }
     });
 }
+
+
+//  HANDLING WRITABLE PROPERTIES: 
+// Send device twin reported properties. 
+function sendDeviceProperties(twin, properties) {
+    twin.properties.reported.update(properties, (err) => greenMessage(`Sent device properties: ${JSON.stringify(properties)}; ` +
+        (err ? `error: ${err.toString()}` : `status: success`)));
+}
+
+// Add any writeable properties your device supports. Map them to a function that's called when the writeable property 
+// is updated in the IoT Central application. 
+var writeableProperties = {
+    'OptimalTemperature': (newValue, callback) => {
+        setTimeout(() => {
+            optimalTemperature = newValue;
+            callback(newValue, 'completed', 200);
+        }, 1000);
+    },
+};
+
+// Handle writeable property updates that come from IoT Central via the device twin. 
+function handleWriteablePropertyUpdates(twin) {
+    twin.on('properties.desired', function (desiredChange) {
+        for (let setting in desiredChange) {
+            if (writeableProperties[setting]) {
+                greenMessage(`Received setting: ${setting}: ${desiredChange[setting]}`);
+                writeableProperties[setting](desiredChange[setting], (newValue, status, code) => {
+                    var patch = {
+                        [setting]: {
+                            value: newValue,
+                            ad: status,
+                            ac: code,
+                            av: desiredChange.$version
+                        }
+                    }
+                    sendDeviceProperties(twin, patch);
+                });
+            }
+        }
+    });
+}
