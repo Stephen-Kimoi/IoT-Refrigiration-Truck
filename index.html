@@ -13,18 +13,6 @@
     <!-- Reference to the Azure Maps Services Module JavaScript file. -->
     <script src="https://atlas.microsoft.com/sdk/javascript/mapcontrol/2/atlas-service.min.js"></script>
 
-    <script>
-        function GetMap() {
-            //Instantiate a map object
-            var map = new atlas.Map("myMap", {
-                //Azure maps subscription key 
-                authOptions: {
-                    authType: 'subscriptionKey',
-                    subscriptionKey: 'BHR3jPNVCUb_rVM64gvnfZabTxn98cZkG2KHx3DlJEY'git 
-                }
-            });
-        }
-    </script>
     <style>
         html,
         body {
@@ -43,6 +31,8 @@
 
 <body onload="GetMap()">
     <div id="myMap"></div>
-</body>
+</body> 
+
+<script src="app.js"></script>
 
 </html>
