@@ -151,7 +151,7 @@ function GetRoute(newState) {
         [currentLon, currentLat],
         [destinationLon, destinationLat]
     ];
-    var results = routeURL.calculateRouteDirections(rest.Aborter.timeout(10000), coordinates);
+    var results = routeUrl.calculateRouteDirections(rest.Aborter.timeout(10000), coordinates);
     results.then(data => {
         greenMessage("Route found. Number of points = " + JSON.stringify(data.routes[0].legs[0].points.length, null, 4));
 
